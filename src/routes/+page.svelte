@@ -6,7 +6,7 @@
   import { superForm } from "sveltekit-superforms";
 
   const { data } = $props();
-  const {createForm, updateForm} = data.forms
+  const { createForm, updateForm, deleteForm } = data.forms;
 
   const { form, errors, message, enhance } = superForm(createForm, {
     onUpdated() {
@@ -36,7 +36,11 @@
           class="rounded-r-none"
           aria-invalid={$errors.description ? "true" : undefined}
         />
-        <Button variant="outline" type="submit" class="rounded-l-none">
+        <Button
+          variant="outline"
+          type="submit"
+          class="rounded-l-none border-l-0"
+        >
           Add
         </Button>
       </form>
@@ -45,10 +49,14 @@
       {/if}
       {#if $message}<span class="text-sm">{$message}</span>{/if}
     </div>
-    <div class="w-full mt-4 flex flex-col border shadow-hard divide-y rounded-lg">
-      {#each data.todos as todo(todo.id)}
-        <Todo {todo} {updateForm} />
-      {/each}
-    </div>
+    {#if data.todos.length}
+      <div
+        class="w-full mt-4 flex flex-col border shadow-hard divide-y rounded-lg"
+      >
+        {#each data.todos as todo (todo.id)}
+          <Todo {todo} {updateForm} {deleteForm} />
+        {/each}
+      </div>
+    {/if}
   </section>
 </main>

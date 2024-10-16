@@ -1,11 +1,13 @@
 <script lang="ts">
   import type { SuperValidated } from "sveltekit-superforms";
   import { superForm } from "sveltekit-superforms/client";
-  import { updateSchema } from "$lib/form-schemas.js";
+  import { deleteSchema, updateSchema } from "$lib/form-schemas.js";
   import { z } from "zod";
   import { invalidate } from "$app/navigation";
   import Button from "./ui/button/button.svelte";
   import Input from "./ui/input/input.svelte";
+  import 'iconify-icon'
+  import { fly } from 'svelte/transition';
 
   type Props = {
     todo: {
@@ -14,9 +16,10 @@
       completed: boolean | null;
     };
     updateForm: SuperValidated<z.infer<typeof updateSchema>>;
+    deleteForm: SuperValidated<z.infer<typeof deleteSchema>>;
   };
 
-  const { todo, updateForm }: Props = $props();
+  const { todo, updateForm, deleteForm }: Props = $props();
 
   const { enhance: toggleEnhance } = superForm(updateForm, {
     id: `todo-toggle-${todo.id}`,
@@ -29,7 +32,7 @@
     }
   });
 
-  const { form: updateDescForm, enhance: updateEnhance, submit } = superForm(updateForm, {
+  const { form: updateFormData, enhance: updateEnhance, submit: submitUpdate } = superForm(updateForm, {
     id: `todo-update-${todo.id}`,
     resetForm: false,
     onUpdated: () => {
@@ -40,19 +43,29 @@
     }
   });
 
+  const { enhance: deleteEnhance } = superForm(deleteForm, {
+    id: `todo-delete-${todo.id}`,
+    onUpdated: () => {
+      invalidate(`app:todos`);
+    },
+    onSubmit: ({ formData }) => {
+			formData.set('id', todo.id.toString());
+    }
+  });
 
-  $updateDescForm.description = todo.description;
+
+  $updateFormData.description = todo.description;
 </script>
 
-<div class="flex justify-between gap-4 items-center px-4 py-2">
+<div class="flex justify-between gap-4 items-center px-4 py-2" transition:fly={{ duration: 150 }}>
   <Input
     form={`todo-update-${todo.id}`}
     type="text"
     name="description"
     placeholder="Do what?"
-    bind:value={$updateDescForm.description}
+    bind:value={$updateFormData.description}
     class="border-0"
-    onfocusout={submit}
+    onfocusout={submitUpdate}
   />
   <Button
     form={`todo-toggle-${todo.id}`}
@@ -61,6 +74,15 @@
     type="submit"
   >
     {todo.completed ? "Undo" : "Done"}
+  </Button>
+  <Button
+    form={`todo-delete-${todo.id}`}
+    size="icon"
+    variant="destructive"
+    class="px-2"
+    type="submit"
+  >
+    <iconify-icon icon="pixelarticons:trash"></iconify-icon>
   </Button>
 </div>
 
@@ -79,4 +101,13 @@
   use:updateEnhance
   id={`todo-update-${todo.id}`}
 ></form>
+
+<form
+  class="hidden"
+  action="?/delete"
+  method="post"
+  use:deleteEnhance
+  id={`todo-delete-${todo.id}`}
+></form>
+
 

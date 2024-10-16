@@ -10,3 +10,7 @@ export const updateSchema = z.object({
   description: z.string().optional(),
   completed: z.boolean().optional(),
 });
+
+export const deleteSchema = z.object({
+  id: z.number(),
+});
